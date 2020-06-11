@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-http="http://www.springframework.org/schema/integration/http"
+	xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/integration
+    http://www.springframework.org/schema/integration/spring-integration.xsd
+    http://www.springframework.org/schema/integration/http
+    http://www.springframework.org/schema/integration/http/spring-integration-http.xsd">
+	<int:poller default="true" fixed-delay="50"/>
+	<int:channel id='reply.channel'>
+		<int:queue capacity='10' />
+	</int:channel>
+	<int:channel id='get.request.channel'/>
+	<int:channel id='post.request.channel'/>
+
+	<int:inbound-channel-adapter id="inAdapter" channel="get.request.channel" expression="''">
+		<int:poller fixed-rate="10000"></int:poller>
+	</int:inbound-channel-adapter>
+
+	<int:outbound-channel-adapter id="outAdapter" channel="reply.channel" ref="inboundEnpoint" method="postReceivedChanelMessage">
+	</int:outbound-channel-adapter>
+
+	<int-http:outbound-gateway id='get.outbound.gateway'
+		request-channel='get.request.channel' url='http://localhost:8081/get'
+		http-method='GET' expected-response-type='java.lang.String'
+		charset='UTF-8' reply-timeout='5000' reply-channel='reply.channel'>
+	</int-http:outbound-gateway>
+
+	<int-http:outbound-gateway id='post.outbound.gateway'
+							   request-channel='post.request.channel' url='http://localhost:8081/post'
+							   http-method='POST' expected-response-type='java.lang.String'
+							   charset='UTF-8' reply-timeout='5000' reply-channel='reply.channel'>
+	</int-http:outbound-gateway>
+
+</beans>
